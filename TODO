@@ -1,0 +1,86 @@
+--------------------------------------------------------------------
+TODO    TODOTODOTODOTODOTODOTODOTODOTODOTODOTODOTODOTODOTODO    TODO
+
+
+If anyone is interested in contributing to the feature set, please
+subscribe to the perl-objectstore mailing list.  Send email to
+majordomo@parallax.co.uk with the following in the body of the
+message:  "subscribe perl-objectstore you@your.company.com"
+
+The items marked with [brackets] denote items which are currently assigned.
+
+
+Optimize for flexibility, then memory performance, then speed.
+
+1. Flexibility
+Flexibility is the most important because ObjectStore needs to be
+easier to use and everyone complains that it can't do SQL.
+We'll show 'em!
+
+2. Memory Performance
+Memory performance is also very important due to the potential size of
+databases.  Small memory efficiency improvements on a 5TB database
+have a big impact.
+
+3. Speed
+Speed is pretty good already, compared to a relational database!
+Of course, there is always room for improvement!
+
+
++ CORE CHANGES +
+
+Copy a bunch of test scripts from the perl release and adapt them
+for ObjStore.  Add a test script to check reference counting.
+
+Turn ObjectStore exceptions into catchable perl exceptions.
+Maybe bad idea and impossible?
+
+Programmer friendly C++ access to persistent perl data structures
+  easy way access tied array & tied hash in C++ (?)
+
+Get or $h->{foo}=undef should not attempt to modify during read transaction!
+
+Fix typemap bug that forces users to untie tied variables manually.
+
+Track down any/all XS transient memory leaks.  Is there any way to
+avoid copying from persistent to transient memory?  For example, can
+we pass persistent strings directly back to perl?
+
+Check wantarray before returning an ossv?  Creating a tied hash is
+time consuming?
+
+Disable assertions if optimization.
+
+Support deleting entire segments without deallocating (?)
+
+xsubpp C++ ideas
+ - typemap initialization should occur directly after var decl
+ - should be able to insert CODE between INPUT tags
+ - should warn if mismatch between arglist & arg decls
+
+
++ BIGGISH PROJECTS +
+
+Add arrays.  Maybe wait until perl-porters improve TIEARRAY interface.
+Add support for parts of the TimeSeries Object Manager but not with tied vars.
+
+Add support for the Text Object Manager!
+
+BIG Collections could be blessed (not tied) objects using os_set or os_Dictionary.
+  os_set ordered by a perl sub?  direct C++ access still ok & easy?
+
+Make ObjStore a shared library!  Make it easy to add additional
+extension that implement high performance persistent objects/collections
+dynamically.  Split out the timeseries & text object managers into
+separate shared objects.  Dream about Apache/Perl/ObjStore integration!
+
+Add MOP support for editing & reporting of abritrary databases!
+
+Expand Make.pm to encompass all architectures/compilers/situations.
+Integrate with and replace MakeMaker.
+
+Could perl performance be improved for tied varibles?  Cache method
+entry points with magic and rewrite all perl support code in C++?
+Do data structure traversals in C instead of perl?  (like Data::DumperX)
+
+

@@ -1,0 +1,91 @@
+######################################################################
+# INPUT/OUTPUT maps
+#
+# O_*		-> opaque blessed objects
+# O_OBJECT	-> link an opaque C or C++ object to a blessed Perl object.
+#
+######################################################################
+
+TYPEMAP
+
+os_database *		O_OBJECT
+os_transaction *	O_OBJECT
+os_database_root *	O_OBJECT
+os_segment *		O_OBJECT
+os_cursor *		O_OBJECT
+os_collection *		O_OBJECT
+OSSV *			O_OSSV
+OSSV_in *		O_OSSV_in
+OSSV_out *		O_OSSV_out
+
+
+######################################################################
+INPUT
+
+O_OBJECT
+	if( sv_isobject($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG) )
+		$var = ($type)SvIV((SV*)SvRV( $arg ));
+	else{
+		warn( \"${Package}::$func_name() -- $var is not a blessed SV reference\" );
+		XSRETURN_UNDEF;
+	}
+
+O_OSSV
+	if( sv_isobject($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG) )
+		$var = ($type)SvIV((SV*)SvRV( $arg ));
+	else{
+		warn( \"${Package}::$func_name() -- $var is not a blessed SV reference\" );
+		XSRETURN_UNDEF;
+	}
+
+O_OSSV_in
+	SV *_tmp_$var = inline_tied( $arg );
+	if (_tmp_$var) {
+	  if (sv_isobject(_tmp_$var) && (SvTYPE(SvRV(_tmp_$var)) == SVt_PVMG)) {
+	    $var = ($type) SvIV((SV*)SvRV( _tmp_$var ));
+	  } else {
+	    warn( \"${Package}::$func_name() -- $var is not a blessed SV reference\");
+	    XSRETURN_UNDEF;
+	  }
+	} else if (sv_isobject($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG) ) {
+	  $var = ($type)SvIV((SV*)SvRV( $arg ));
+	} else {
+	  croak( \"${Package}::$func_name() -- $var is not a persistant object\" );
+	}
+
+O_OSSV_out
+	if( sv_isobject($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG) )
+		$var = ($type)SvIV((SV*)SvRV( $arg ));
+	else{
+		warn( \"${Package}::$func_name() -- $var is not a blessed SV reference\" );
+		XSRETURN_UNDEF;
+	}
+
+######################################################################
+OUTPUT
+
+# The Perl object is blessed into 'CLASS', which should be a
+# char* having the name of the package for the blessing.
+O_OBJECT
+	sv_setref_pv( $arg, CLASS, (void*)$var );
+
+O_OSSV
+	sv_setref_pv( $arg, $var->CLASS(), (void*)$var );
+
+O_OSSV_in
+	sv_setref_pv( $arg, $var->CLASS(), (void*)$var );
+
+O_OSSV_out
+	if (! $var ) $arg = &sv_undef;
+	else {
+	  if ($var->natural() == ossv_hv || $var->natural() == ossv_av) {
+	    SV *_tied = sv_setref_pv(sv_newmortal(), $var->CLASS(), (void*)$var);
+	    SV *_tmpsv;
+	    if ($var->natural() == ossv_hv) _tmpsv = sv_2mortal((SV*)newHV());
+	    else _tmpsv = sv_2mortal((SV*)newAV());
+	    sv_magic(_tmpsv, _tied, $var->MAGIC(), Nullch, 0);
+	    $arg = newRV_noinc(_tmpsv);
+	  } else {
+	    $arg = $var->as_sv( $arg );
+	  }
+	}

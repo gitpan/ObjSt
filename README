@@ -1,0 +1,28 @@
+Copyright (c) 1997 Joshua Nathaniel Pritikin.  All rights reserved.
+This package is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+
+Name           DSLI  Description                                  Info
+-----------    ----  -------------------------------------------- -----
+ObjStore       am+O  ObjectStore DBMS Interface                   JPRIT
+
+Easy, flexible, lightning-fast persistent via ObjectStore.  Stores
+scalars, arrays, hashes, and references without any flattening.
+The perl tie interface is used to make access completely transparent.
+The schema is also designed to easily support direct access from native
+C++ applications.  MOP support is planed for editing and reporting on
+arbitrary schemas.  100GB databases can be created and managed completely
+in perl5 with vastly better performance than Oracle or Informix!
+
+           << This is the relational database killer app! >>
+
+Perl-ObjectStore mailing list:
+
+majordomo@parallax.co.uk   "subscribe perl-objectstore you@your.company.com"
+
+
+
+see ./INSTALL for installation instructions
+
+see ./TODO for list of things to do

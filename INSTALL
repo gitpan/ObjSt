@@ -1,0 +1,23 @@
+Copyright (c) 1997 Joshua Nathaniel Pritikin.  All rights reserved.
+This package is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+
+** Installation
+
+Written to ObjectStore 5.0 and SunPro 4.0 C++.
+
+The build process is non-standard and needs some hand-holding.  (Sorry!)
+
+0. Type './m check'.  It should output "Looks good.".  If you see an error
+like this: "No such file: README", then you may have an incomplete
+distribution.
+
+1. Examine the file './m'.  This is the makefile.  Read the instructions
+at the top and make any necessary changes.
+
+2. Run the './m' script.
+
+3. It should build an './osperl' binary and run the test scripts.  The
+./t/hash.t script fails on two tests.  This problem has been reported to
+the perlbug mailing list.

@@ -1,0 +1,10 @@
+#include "osperl.hh"
+#include <ostore/manschem.hh>
+
+OS_MARK_SCHEMA_TYPE(OSSV);
+OS_MARK_SCHEMA_TYPE(OSSVPV);
+OS_MARK_SCHEMA_TYPE(hkey);
+OS_MARK_SCHEMA_TYPE(hent);
+OS_MARK_SCHEMA_TYPE(OSPV_array);
+OS_MARK_SCHEMA_TYPE(OSPV_dict);
+OS_MARK_DICTIONARY(hkey,OSSV*);

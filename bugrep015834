@@ -1,0 +1,125 @@
+This is a bug report for perl from pritikin@mindspring.com,
+generated with the help of perlbug 1.17 running under perl 5.004.
+
+It seems like I've run into a bug in a tied hash.  The problem only
+shows up when you are trying to nest tied hashes on the fly.  I ran
+into this problem while trying to flesh out my ObjectStore extension for
+perl.  Here is my test program:
+
+----------------------------------------------------------------------
+
+BEGIN { $| = 1; $tx=1; print "1..4\n"; }
+
+sub ok { print "ok $tx\n"; $tx++; }
+sub not_ok { print "not ok $tx\n"; $tx++; }
+
+use OS;
+
+{
+    my $DB = OS::Database->open("/export2/os/joshua/perltest.db", 0, 0666);
+    
+    try_update {
+	my $john = $DB->root('John');
+	$john ? ok : not_ok;
+	my $xr = $john->{nest}{rat} = {};
+	tied %$xr ? ok : not_ok;
+	$xr->{blat} = 69;
+	$john->{nest}{rat}{blat} == 69 ? ok : not_ok;
+	delete $john->{nest}{rat}{blat};
+	delete $john->{nest}{rat};
+	delete $john->{nest};
+	defined $john->{nest} ? not_ok : ok;
+    };
+}
+
+----------------------------------------------------------------------
+
+[joshua@elvis] ~/gref% ./osperl t/hash.t 
+1..4
+ok 1
+fetch nest => <0x0> at t/hash.t line 14.
+insert nest HASH(0xe2671a08) at OS.pm line 101.
+not ok 2
+fetch nest => HASH(0xe2671a08) at t/hash.t line 17.
+fetch rat => <0x0> at t/hash.t line 17.
+insert rat HASH(0xe2671b18) at OS.pm line 101.
+not ok 3
+fetch nest => HASH(0xe2671a08) at t/hash.t line 18.
+fetch rat => HASH(0xe2671b18) at t/hash.t line 18.
+fetch nest => HASH(0xe2671a08) at t/hash.t line 19.
+fetch nest => <0x0> at t/hash.t line 21.
+ok 4
+
+Notice that 'nest' is created, however 'rat' must be created in the
+untied hash.  There seems to be no way to inform perl that the key's
+value has been swapped to another tied hash ref.
+
+----------------------------------------------------------------------
+
+Here is my recursive STORE method:
+
+sub STORE {
+    my ($o, $k, $nval) = @_;
+    if (!ref $nval) {
+	$o->_STORE($k, $nval);
+    } elsif (ref $nval eq 'HASH') {
+	if (tied %$nval) {
+	    $o->_STORE($k, tied %$nval);
+	} else {
+	    my $seg = OS::Segment->of($o);
+	    my $hv = $seg->newHV;
+	    while (my($hk,$v) = each %$nval) {
+		$hv->STORE($hk, $v);
+	    }
+	    $o->_STORE($k, $hv); # HOW TO INFORM PERL THAT THE REAL VALUE IS $hv?
+	}
+    } elsif (ref $nval eq 'OS::HV') {
+	$o->_STORE($k, $nval);
+    } else {
+	croak "Don't know how to store $nval";
+    }
+}
+
+
+---
+Site configuration information for perl 5.004:
+
+Configured by kerrd at Mon May 19 08:07:10 EDT 1997.
+
+Summary of my perl5 (5.0 patchlevel 4 subversion 0) configuration:
+  Platform:
+    osname=solaris, osvers=2.5.1, archname=sun4-solaris
+    uname='sunos grdevl131 5.5.1 generic sun4u sparc sunw,ultra-1 '
+    hint=recommended, useposix=true, d_sigaction=define
+    bincompat3=n useperlio= d_sfio=
+  Compiler:
+    cc='gcc', optimize='-O', gccversion=2.7.2
+    cppflags='-I/usr/local/include'
+    ccflags ='-I/usr/local/include'
+    stdchar='unsigned char', d_stdstdio=define, usevfork=false
+    voidflags=15, castflags=0, d_casti32=define, d_castneg=define
+    intsize=4, alignbytes=8, usemymalloc=y, randbits=15
+  Linker and Libraries:
+    ld='gcc', ldflags =' -L/usr/local/lib'
+    libpth=/usr/local/lib /lib /usr/lib /usr/ccs/lib
+    libs=-lsocket -lnsl -ldl -lm -lc -lcrypt
+    libc=/lib/libc.so, so=so
+    useshrplib=false, libperl=libperl.a
+  Dynamic Linking:
+    dlsrc=dl_dlopen.xs, dlext=so, d_dlsymun=, ccdlflags=' '
+    cccdlflags='-fpic', lddlflags='-G -L/usr/local/lib'
+
+
+---
+@INC for perl 5.004:
+	/nw/dist/prod/lib/perl5/sun4-solaris/5.004
+	/nw/dist/prod/lib/perl5
+	/nw/dist/prod/lib/perl5/site_perl/sun4-solaris
+	/nw/dist/prod/lib/perl5/site_perl
+	.
+
+---
+Environment for perl 5.004:
+    PATH=.:/export2/os/osi/2.0/bin:/nw/dist/vendor/os/4.0.2/sunpro/bin:/home/joshua/bin:/bin:/usr/bin:/usr/sbin:/etc:/usr/ucb:/nw/dist/prod/bin:/usr/local/bin:/Vendor/S2Xproducts/SINSTINET/bin:/usr/dt/bin:/usr/openwin/bin:/usr/ccs/bin:/opt/SUNWspro/bin:/usr/local/bin/sparc-sun-solaris2.4-sparcworks:/usr/lib/lp/postscript:/usr/newsprint/bin:/Vendor/products/S2Xfamelib7.5:/Vendor/products/frame/bin
+    LD_LIBRARY_PATH=/nw/dist/vendor/os/4.0.2/sunpro/lib:/Vendor/products/ssl/lib:/usr/sybase/lib:/usr/lib:/nw/dist/prod/lib:/usr/local/lib:/usr/dt/lib:/usr/openwin/lib:/usr/ccs/bin/lib:/opt/SUNWspro/lib:/Vendor/products/S2Xfamelib7.5/hli
+    PERL_BADLANG (unset)
